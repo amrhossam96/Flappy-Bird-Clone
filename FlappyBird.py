@@ -10,26 +10,9 @@ path = 'flappy-bird.png'
 background = 'background2.jpg'
 WIDTH = 400
 HEIGHT = 400
-x_speed = -0.25
-bird_g = 0.0006
-bird_speed = 0
-score = 0
-frameCount = 0
-divider = 300
 
-#DEFINING KEY LISTENER FUNCTION
-def keyPressed(event):
-	global x_speed
-	global bird_speed
-	global bird_g
-	input = event.keysym
-	if(input=="Up"):
-		bird_g+=0.003
-		x_speed-=0.1
-	elif(input=="Down"):
-		x_speed+=0.1
-	elif(input=="space"):
-		bird_speed=-0.13
+
+
 	
 
 
@@ -44,41 +27,36 @@ class MainScreen:
 		self.parent.title('Main Screen')
 		self.canvas.pack()
 		self.background = background
-		self.bg = self.canvas.create_image(0,0,image=self.background)
+		#self.parent.overrideredirect(1)
+		self.bg = self.canvas.create_image(-1,-1,image=self.background)
 		self.canvas.move(self.bg,0,110)
+		self.parent.geometry("+500+250")
+		self.x_speed = -0.11
+		self.bird_g = 0.0006
+		self.bird_speed = 0
+		self.score = 0
+		self.frameCount = 0
+		self.divider = 16
 		self.begin_game()
 		self.parent.mainloop()
 
 	def begin_game(self):
 
-		global score
-		global divider
-		
 		self.bird_controller = self.bird.show(self.canvas)
 		self.bird_coords = self.canvas.coords(self.bird_controller)
-		self.parent.bind("<Key>",keyPressed)
-		numbers = []
-
-
+		self.parent.bind("<Key>",self.keyPressed)
 		self.pipes = []
 		self.not_dead = True
-		score1 = self.canvas.create_text(200,40,text='Score: {}'.format(str(int(score/divider))),fill='white',font=('Times new roman',15,'bold'))
-		#self.line=self.canvas.create_line(self.bird_coords[0]+12,0,self.bird_coords[0]+12,400)
-
-		
+		score1 = self.canvas.create_text(200,40,text='Score: {}'.format(str(int(self.score/self.divider))),fill='white',font=('Times new roman',15,'bold'))
 		
 		############'''Game Main Loop'''##############
 		
 		while self.not_dead:
-			global frameCount
-			global bird_speed
-			
-			global bird_g
-			
-			bird_speed+=bird_g
-			frameCount+=1
-			if(frameCount%1800 == 0):
-				pipe = Pipe(400,0,430,30,80)
+		
+			self.bird_speed+=self.bird_g
+			self.frameCount+=1
+			if(self.frameCount%1300 == 0):
+				pipe = Pipe(400,0,450,30,80)
 				self.pipes.append(pipe.show(self.canvas))
 			self.pipes = [x for x in self.pipes if not self.determine(x)]
 
@@ -86,33 +64,31 @@ class MainScreen:
 			#Moving the pipes
 			for pipelist in self.pipes:
 				for pipe in pipelist:
-					self.canvas.move(pipe,-0.07,0)
+					self.canvas.move(pipe,self.x_speed,0)
 					self.bird_coords = self.canvas.coords(self.bird_controller)
 				if(self.bird_coords[1]+20>367):
 					bird_speed=0
-					self.canvas.move(self.bird_controller,0,-bird_g)
+					self.canvas.move(self.bird_controller,0,-self.bird_g)
 				else:
-					self.canvas.move(self.bird_controller,0,bird_speed)
+					self.canvas.move(self.bird_controller,0,self.bird_speed)
 				if(self.is_collided(self.bird_controller,self.pipes)):
 					
-					print("{} CONGRATULATIONS!! YOUR SCORE IS {}".format("Amr",int(score/divider)))
+					print("{} CONGRATULATIONS!! YOUR SCORE IS {}".format("Amr",int(self.score/self.divider)))
 					self.not_dead = False
 
 				else:
 					pass
-
-			next_pipe = self.detect_next_pipe()
-			if(next_pipe):
-				if(self.bird_coords[0]>self.canvas.coords(next_pipe[0])[0]):
-					score+=1
-
+		
 			
-			self.canvas.itemconfigure(score1, text=str(str(int(score/divider))))
-
-
-			
+			if(self.detect_next_pipe()):
+				ahead_pipe = self.detect_next_pipe()[0]
+				if(self.bird_coords[0]+2>=self.canvas.coords(ahead_pipe)[2]):
+					self.score+=1
+					
+			self.canvas.itemconfigure(score1, text=str(str(int(self.score/self.divider))))
 			self.canvas.tag_raise(score1)
 			self.canvas.update()
+
 	def detect_next_pipe(self):
 		dist_dict = {}
 		bird_coords = self.bird_coords
@@ -121,12 +97,22 @@ class MainScreen:
 				pipe_coords = self.canvas.coords(pipe)
 				if(pipe_coords[2]-bird_coords[0]>0):
 					dist_dict.update({pipe:pipe_coords[0]})
-
-		
 		r = list(dist_dict)
 		return r
 
-
+	#DEFINING KEY LISTENER FUNCTION
+	def keyPressed(self,event):
+		global x_speed
+		global bird_speed
+		global bird_g
+		input = event.keysym
+		if(input=="Up"):
+			self.bird_g+=0.003
+			self.x_speed-=0.1
+		elif(input=="Down"):
+			self.x_speed+=0.1
+		elif(input=="space"):
+			self. bird_speed=-0.13
 
 	def determine(self,x):
 		if(self.canvas.coords(x[0])[2]>0):
@@ -179,3 +165,4 @@ bg = Image.open(background)
 bird = Bird(200,210,230,240,ImageTk.PhotoImage(img))
 
 main_screen = MainScreen(WIDTH,HEIGHT,root,bird,ImageTk.PhotoImage(bg))
+
